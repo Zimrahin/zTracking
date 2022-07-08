@@ -8,6 +8,8 @@ Instructions for its use are separated into four sections:
 * Write CSV
 * Read CSV and results
 
+![image](./READMEimg/zTracking.png)
+
 ### Instructions
 #### Installation
 ##### Install Virtualenv
@@ -18,7 +20,7 @@ pip install virtualenv
 ```
 virtualenv zTracking
 ```
-##### Activate enfironmen
+##### Activate environment
 ```
 zTracking\Scripts\Activate
 ```
