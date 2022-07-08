@@ -14,7 +14,7 @@ Instructions for its use are separated into four sections:
 ```
 pip install virtualenv
 ```
-##### Create environment
+##### Create environment in repository folder
 ```
 virtualenv zTracking
 ```
