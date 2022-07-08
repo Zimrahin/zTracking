@@ -57,10 +57,10 @@ python writeTrack.py --fileName "crop.mp4" --outputName "trackPoints.csv"
 Once the script is running, a window with the first frame of the video will appear. Select four points that make a rectangle in order to make a perspective transform.
 ![image](./READMEimg/write_track/1.png)
 
-Select a box at the centre of the track for a pixel to centimetres conversion
+Select a box at the centre of the track for a pixel to centimetres conversion and press Enter
 ![image](./READMEimg/write_track/2.png)
 
-Select a trackable area from the frontalmost car
+Select a trackable area from the frontalmost car. Press Enter
 ![image](./READMEimg/write_track/3.png)
 
 #### Read CSV
