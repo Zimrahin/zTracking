@@ -60,24 +60,24 @@ Once the script is running, a window with the first frame of the video will appe
 Select a box at the centre of the track for a pixel to centimetres conversion and press Enter
 ![image](./READMEimg/write_track/2.png)
 
-Select a trackable area from the frontalmost car. Press Enter
+Select a trackable area from the frontalmost car. Press Enter. Once processing is over, close the window
 ![image](./READMEimg/write_track/3.png)
 
 #### Read CSV
 
 `readTrack.py` is used to read a coordinate map of a track and a video
 ```
-python writeTrack.py --fileName "prueba_1.mp4" --trackName "trackPoints.csv" --outputName "results.csv"
+python readTrack.py --fileName "prueba_1.mp4" --trackName "trackPoints.csv" --outputName "results.csv"
 ```
 * `fileName` is the video containing an experiment.
 * `trackName` is the name of the input CSV file which contains the track coordinates
 * `outputName` is a CSV file containing the distances between cars taken from the input video
 
-Once the script is running, select a box at the centre of the track for a pixel to centimetres conversion
+Once the script is running, select a box at the centre of the track for a pixel to centimetres conversion. Press Enter.
 ![image](./READMEimg/read_track/1.png)
 
 A window with a plot of the track will appear. Close it.
 ![image](./READMEimg/read_track/2.png)
 
-Select a trackable area from each car, from left to right
+Select a trackable area from each car, from left to right. Press Enter each time a car is selected
 ![image](./READMEimg/read_track/3.png)
