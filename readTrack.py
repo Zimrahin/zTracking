@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import argparse
 
 
-agentLength = 5 	# cm (cube)
+agentLength = 10.5 	# cm (cube)
 
 def readTrack(opt):
 

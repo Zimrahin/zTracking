@@ -6,7 +6,7 @@ import scipy.signal
 from matplotlib import pyplot as plt
 import argparse
 
-agentLength = 5 	# cm (cube)
+agentLength = 10.5 	# cm (cube)
 positions = []		# for perspective transform
 countClicks = 0
 
