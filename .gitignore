@@ -1,0 +1,5 @@
+zTracking/
+*.csv
+
+#ignore pycache
+**/__pycache__
