@@ -1,6 +1,6 @@
 # zTracking
 
-This project is designed to visualize and measure, via image processing, the distances between cars in a platooning on a circuit.
+This project is designed to measure, via image processing, the distances between cars in a platooning on a circuit.
 
 Instructions for its use are separated into four sections:
 * Installation
