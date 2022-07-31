@@ -5,12 +5,13 @@ import numpy as np
 import scipy.signal
 from matplotlib import pyplot as plt
 import argparse
+from Tracker import Tracker
 
 
 agentLength = 10.5 	# cm (cube)
+N = 6 				# number of carts
 
 def readTrack(opt):
-
 	# read CSV file
 	positions = []		# for perspective transform
 	with open(opt.cornerPoints, "r") as infile:
@@ -32,7 +33,11 @@ def readTrack(opt):
 	# write CSV file
 	myFile = open(opt.outputName, 'w', newline = '')
 	writer = csv.writer(myFile)
-	writer.writerow(['time(s)', 'distance12(cm)', 'distance23(cm)', 'distance34(cm)'])
+	firstrow = ['time(s)']
+	for i in range(N-1):
+		firstrow.append('distance' + str(i+1) + str(i+2) + '(cm)')
+	writer.writerow(firstrow)
+	del(firstrow)	# free memory
 
 	# Perspective transform
 	src = np.float32([positions[0], positions[1], positions[2], positions[3]])
@@ -42,6 +47,7 @@ def readTrack(opt):
 	frame = cv.warpPerspective(frame, M, (width, height))
 
 	# get agent length in pixels
+	cv.namedWindow('Pixels to centimetres', cv.WINDOW_NORMAL)
 	bbox = cv.selectROI('Pixels to centimetres', warped_frame, False)
 	length = bbox[2] 	# pixel
 	cv.destroyWindow('Pixels to centimetres')
@@ -53,7 +59,6 @@ def readTrack(opt):
 		for row in reader:
 			row_float =[float(row[0]), float(row[1])]
 			trackPoints.append(row_float)
-	#print(trackPoints)
 
 	trackPoints_x = [x[0] for x in trackPoints]
 	trackPoints_y = [y[1] for y in trackPoints]
@@ -72,74 +77,37 @@ def readTrack(opt):
 	plt.ylabel('(cm)')
 	plt.show()
 
+	# initialise trackers
+	cv.namedWindow('zTracking', cv.WINDOW_AUTOSIZE)
+	trackers = []
+	for i in range(N):
+		trackers.append(Tracker(frame))
 
-
-	# initialise tracker1
-	bbox1 = cv.selectROI('Tracking_v3', frame, False)
-	tracker1 = cv.TrackerCSRT_create()
-	tracker1.init(frame, bbox1)
-
-	# initialise tracker2
-	bbox2 = cv.selectROI('Tracking_v3', frame, False)
-	tracker2 = cv.TrackerCSRT_create()
-	tracker2.init(frame, bbox2)
-
-	# initialise tracker3
-	bbox3 = cv.selectROI('Tracking_v3', frame, False)
-	tracker3 = cv.TrackerCSRT_create()
-	tracker3.init(frame, bbox3)
-
-	# initialise tracker4
-	bbox4 = cv.selectROI('Tracking_v3', frame, False)
-	tracker4 = cv.TrackerCSRT_create()
-	tracker4.init(frame, bbox4)
-
-	# initialise tracker5
-	bbox5 = cv.selectROI('Tracking_v3', frame, False)
-	tracker5 = cv.TrackerCSRT_create()
-	tracker5.init(frame, bbox5)
-
-	cv.destroyWindow('Tracking_v3')
+	cv.destroyWindow('zTracking')
 
 	firstFrame = True
 	seconds = 0.
 	timeArr = []
-	distance12Arr = []
-	distance23Arr = []
-	distance34Arr = []
-	distance45Arr = []
+	distancesArr = []
+	colours_plot = ['lime', 'magenta', 'yellow', 'cyan', 'green', 'blue', 'red']
 
 	while vid.isOpened():
 		ret, frame = vid.read()
 
 		if ret:
+			points = []
 			frame = cv.warpPerspective(frame, M, (width, height))
-			ret, bbox2 = tracker2.update(frame)
-			_, bbox3 = tracker3.update(frame)
-			_, bbox1 = tracker1.update(frame)
-			_, bbox4 = tracker4.update(frame)
-			_, bbox5 = tracker5.update(frame)
+			for tracker in trackers:
+				if(tracker.update(frame)):
+					tracker.getCoordinates()
+				else:
+					print('could not detect object')
+					exit(-1)
+			
+				tracker.getCentroid(height)
+				points.append(tracker.p)
 
-			if ret:
-				x1, y1, w1, h1 = int(bbox1[0]), int(bbox1[1]), int(bbox1[2]), int(bbox1[3])
-				#cv.rectangle(frame, (x1, y1), (x1+w1, y1+h1), (0, 0, 255), 2, 1)
-				x2, y2, w2, h2 = int(bbox2[0]), int(bbox2[1]), int(bbox2[2]), int(bbox2[3])
-				#cv.rectangle(frame, (x2, y2), (x2 + w2, y2 + h2), (0, 0, 255), 2, 1)
-				x3, y3, w3, h3 = int(bbox3[0]), int(bbox3[1]), int(bbox3[2]), int(bbox3[3])
-				#cv.rectangle(frame, (x3, y3), (x3 + w3, y3 + h3), (0, 0, 255), 2, 1)
-				x4, y4, w4, h4 = int(bbox4[0]), int(bbox4[1]), int(bbox4[2]), int(bbox4[3])
-				x5, y5, w5, h5 = int(bbox5[0]), int(bbox5[1]), int(bbox5[2]), int(bbox5[3])
-			else:
-				print('could not detect object')
-				exit(-1)
-
-			p1 = (x1 + w1/2., height - y1 - h1/2.)
-			p2 = (x2 + w2/2., height - y2 - h2/2.)
-			p3 = (x3 + w3/2., height - y3 - h3/2.)
-			p4 = (x4 + w4/2., height - y4 - h4/2.)
-			p5 = (x5 + w5/2., height - y5 - h5/2.)
 			# Find closest point in track
-			points = [p1, p2, p3, p4, p5]
 			pointsInTrack = []
 			pointsInTrackPositions = []
 			for point in points:
@@ -154,67 +122,30 @@ def readTrack(opt):
 					count += 1
 				pointsInTrack.append(minPoint)
 				pointsInTrackPositions.append(positionInTrack)
-			#print(pointsInTrack)
-			#print(pointsInTrackPositions)
+
 
 			# Find non-euclidean distance
-			# Distance 1-2
-			distance12 = 0.
-			if pointsInTrackPositions[0] <= pointsInTrackPositions[1]:
-				for k in range(pointsInTrackPositions[0], pointsInTrackPositions[1] - 1):
-					distance12 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-			else:
-				for k in range(0, pointsInTrackPositions[1]):
-					distance12 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				for k in range(pointsInTrackPositions[0], len(trackPoints) - 1):
-					distance12 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				# Add discontinuity
-				distance12 += math.sqrt((trackPoints[0][0] - trackPoints[len(trackPoints) - 1][0]) ** 2 + (trackPoints[0][1] - trackPoints[len(trackPoints) - 1][1]) ** 2)
+			distances = []
+			distances_cm = []
+			temp_distance = 0.0
+			for i in range(N - 1):
+				if pointsInTrackPositions[i] <= pointsInTrackPositions[i+1]:
+					for k in range(pointsInTrackPositions[i], pointsInTrackPositions[i+1] - 1):
+						temp_distance += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
+				else:
+					for k in range(0, pointsInTrackPositions[i+1]):
+						temp_distance += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
+					for k in range(pointsInTrackPositions[i], len(trackPoints) - 1):
+						temp_distance += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
+					# Add discontinuity
+					temp_distance += math.sqrt((trackPoints[0][0] - trackPoints[len(trackPoints) - 1][0]) ** 2 + (trackPoints[0][1] - trackPoints[len(trackPoints) - 1][1]) ** 2)
 
-			# Distance 2-3
-			distance23 = 0.
-			if pointsInTrackPositions[1] <= pointsInTrackPositions[2]:
-				for k in range(pointsInTrackPositions[1], pointsInTrackPositions[2] - 1):
-					distance23 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-			else:
-				for k in range(0, pointsInTrackPositions[2]):
-					distance23 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				for k in range(pointsInTrackPositions[1], len(trackPoints) - 1):
-					distance23 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				# Add discontinuity
-				distance23 += math.sqrt((trackPoints[0][0] - trackPoints[len(trackPoints) - 1][0]) ** 2 + (trackPoints[0][1] - trackPoints[len(trackPoints) - 1][1]) ** 2)
+				distances.append(temp_distance)
+				distances_cm.append(temp_distance * agentLength / length)
+				# Clean temporal variable before next iteration
+				temp_distance = 0.0
 
-			# Distance 3-4
-			distance34 = 0.
-			if pointsInTrackPositions[2] <= pointsInTrackPositions[3]:
-				for k in range(pointsInTrackPositions[2], pointsInTrackPositions[3] - 1):
-					distance34 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-			else:
-				for k in range(0, pointsInTrackPositions[3]):
-					distance34 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				for k in range(pointsInTrackPositions[2], len(trackPoints) - 1):
-					distance34 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				# Add discontinuity
-				distance34 += math.sqrt((trackPoints[0][0] - trackPoints[len(trackPoints) - 1][0]) ** 2 + (trackPoints[0][1] - trackPoints[len(trackPoints) - 1][1]) ** 2)
-
-			# Distance 4-5
-			distance45 = 0.
-			if pointsInTrackPositions[3] <= pointsInTrackPositions[4]:
-				for k in range(pointsInTrackPositions[3], pointsInTrackPositions[4] - 1):
-					distance45 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-			else:
-				for k in range(0, pointsInTrackPositions[4]):
-					distance45 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				for k in range(pointsInTrackPositions[3], len(trackPoints) - 1):
-					distance45 += math.sqrt((trackPoints[k][0] - trackPoints[k+1][0]) ** 2 + (trackPoints[k][1] - trackPoints[k+1][1]) ** 2)
-				# Add discontinuity
-				distance45 += math.sqrt((trackPoints[0][0] - trackPoints[len(trackPoints) - 1][0]) ** 2 + (trackPoints[0][1] - trackPoints[len(trackPoints) - 1][1]) ** 2)
-
-			distance12_cm = distance12 * agentLength / length
-			distance23_cm = distance23 * agentLength / length
-			distance34_cm = distance34 * agentLength / length
-			distance45_cm = distance45 * agentLength / length
-
+			
 			# Plot animation
 			plt.figure(1)
 			plt.cla()
@@ -222,50 +153,22 @@ def readTrack(opt):
 			plt.gca().set_ylim(0, height * agentLength / length)
 			plt.gca().set_xlim(0, width * agentLength / length)
 			plt.gca().imshow(cv.cvtColor(frame, cv.COLOR_BGR2RGB), extent=[0, width * agentLength / length, 0, height * agentLength / length])
-			# Distance 1-2
-			if pointsInTrackPositions[0] <= pointsInTrackPositions[1]:
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[0]:pointsInTrackPositions[1]], trackPoints_y_cm[pointsInTrackPositions[0]:pointsInTrackPositions[1]], color='lime')
-			else:
-				plt.plot(trackPoints_x_cm[0:pointsInTrackPositions[1]], trackPoints_y_cm[0:pointsInTrackPositions[1]], color='lime')
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[0]:-1], trackPoints_y_cm[pointsInTrackPositions[0]:-1], color='lime')
-				plt.plot([trackPoints_x_cm[-1], trackPoints_x_cm[0]], [trackPoints_y_cm[-1], trackPoints_y_cm[0]], color='lime')
-			# Distance 2-3
-			if pointsInTrackPositions[1] <= pointsInTrackPositions[2]:
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[1]:pointsInTrackPositions[2]], trackPoints_y_cm[pointsInTrackPositions[1]:pointsInTrackPositions[2]], color='magenta')
-			else:
-				plt.plot(trackPoints_x_cm[0:pointsInTrackPositions[2]], trackPoints_y_cm[0:pointsInTrackPositions[2]], color='magenta')
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[1]:-1], trackPoints_y_cm[pointsInTrackPositions[1]:-1], color='magenta')
-				plt.plot([trackPoints_x_cm[-1], trackPoints_x_cm[0]], [trackPoints_y_cm[-1], trackPoints_y_cm[0]], color='magenta')
-			# Distance 3-4
-			if pointsInTrackPositions[2] <= pointsInTrackPositions[3]:
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[2]:pointsInTrackPositions[3]], trackPoints_y_cm[pointsInTrackPositions[2]:pointsInTrackPositions[3]], color='yellow')
-			else:
-				plt.plot(trackPoints_x_cm[0:pointsInTrackPositions[3]], trackPoints_y_cm[0:pointsInTrackPositions[3]], color='yellow')
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[2]:-1], trackPoints_y_cm[pointsInTrackPositions[2]:-1], color='yellow')
-				plt.plot([trackPoints_x_cm[-1], trackPoints_x_cm[0]], [trackPoints_y_cm[-1], trackPoints_y_cm[0]], color='yellow')
-			# Distance 4-5
-			if pointsInTrackPositions[3] <= pointsInTrackPositions[4]:
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[3]:pointsInTrackPositions[4]], trackPoints_y_cm[pointsInTrackPositions[3]:pointsInTrackPositions[4]], color='cyan')
-			else:
-				plt.plot(trackPoints_x_cm[0:pointsInTrackPositions[4]], trackPoints_y_cm[0:pointsInTrackPositions[4]], color='cyan')
-				plt.plot(trackPoints_x_cm[pointsInTrackPositions[3]:-1], trackPoints_y_cm[pointsInTrackPositions[3]:-1], color='cyan')
-				plt.plot([trackPoints_x_cm[-1], trackPoints_x_cm[0]], [trackPoints_y_cm[-1], trackPoints_y_cm[0]], color='cyan')
+			
+			# FOR distances
+			for i in range(N-1):
+				if pointsInTrackPositions[i] <= pointsInTrackPositions[i+1]:
+					plt.plot(trackPoints_x_cm[pointsInTrackPositions[i]:pointsInTrackPositions[i+1]], trackPoints_y_cm[pointsInTrackPositions[i]:pointsInTrackPositions[i+1]], color=colours_plot[i])
+				else:
+					plt.plot(trackPoints_x_cm[0:pointsInTrackPositions[i+1]], trackPoints_y_cm[0:pointsInTrackPositions[i+1]], color=colours_plot[i])
+					plt.plot(trackPoints_x_cm[pointsInTrackPositions[i]:-1], trackPoints_y_cm[pointsInTrackPositions[i]:-1], color=colours_plot[i])
+					# Add discontinuity
+					plt.plot([trackPoints_x_cm[-1], trackPoints_x_cm[0]], [trackPoints_y_cm[-1], trackPoints_y_cm[0]], color=colours_plot[i])
+				# plot text
+				plt.text((points[i][0] + points[i+1][0])/2. * agentLength / length, (points[i][1] + points[i+1][1])/2. * agentLength / length, str(round(distances_cm[i], 1)), color='white')
 
-			plt.plot(pointsInTrack[0][0] * agentLength / length, pointsInTrack[0][1] * agentLength / length, 'bo', color='red')
-			plt.plot(pointsInTrack[1][0] * agentLength / length, pointsInTrack[1][1] * agentLength / length, 'bo',  color='red')
-			plt.plot(pointsInTrack[2][0] * agentLength / length, pointsInTrack[2][1] * agentLength / length, 'bo',  color='red')
-			plt.plot(pointsInTrack[3][0] * agentLength / length, pointsInTrack[3][1] * agentLength / length, 'bo',  color='red')
-			plt.plot(pointsInTrack[4][0] * agentLength / length, pointsInTrack[4][1] * agentLength / length, 'bo',  color='red')
-
-			#plt.plot([p1[0] * agentLength / length, p2[0] * agentLength / length], [p1[1] * agentLength / length, p2[1] * agentLength / length], 'bo', linestyle="--", color='lime')
-			plt.text((p1[0] + p2[0])/2. * agentLength / length, (p1[1] + p2[1])/2. * agentLength / length, str(round(distance12_cm, 1)), color='white')
-
-			#plt.plot([p2[0] * agentLength / length, p3[0] * agentLength / length], [p2[1] * agentLength / length, p3[1] * agentLength / length], 'bo', linestyle="--", color='lime')
-			plt.text((p2[0] + p3[0]) / 2. * agentLength / length, (p2[1] + p3[1]) / 2. * agentLength / length, str(round(distance23_cm, 1)), color='white')
-
-			plt.text((p3[0] + p4[0]) / 2. * agentLength / length, (p3[1] + p4[1]) / 2. * agentLength / length, str(round(distance34_cm, 1)), color='white')
-
-			plt.text((p4[0] + p5[0]) / 2. * agentLength / length, (p4[1] + p5[1]) / 2. * agentLength / length, str(round(distance45_cm, 1)), color='white')
+			# FOR points
+			for i in range(N):
+				plt.plot(pointsInTrack[i][0] * agentLength / length, pointsInTrack[i][1] * agentLength / length, 'bo', color='red')
 
 			plt.xlabel('(cm)')
 			plt.ylabel('(cm)')
@@ -273,13 +176,13 @@ def readTrack(opt):
 
 			# append into arrays
 			timeArr = np.append(timeArr, seconds)
-			distance12Arr = np.append(distance12Arr, distance12_cm)
-			distance23Arr = np.append(distance23Arr, distance23_cm)
-			distance34Arr = np.append(distance34Arr, distance34_cm)
-			distance45Arr = np.append(distance45Arr, distance45_cm)
-
+			distancesArr.append(distances_cm)
 			# write CSV file
-			writer.writerow([seconds, distance12_cm, distance23_cm, distance34_cm, distance45_cm])
+			firstrow = [seconds]
+			for i in range(N-1):
+				firstrow.append(distances_cm[i])
+			writer.writerow(firstrow)
+			del(firstrow)	# free memory
 
 			seconds += deltaT
 			firstFrame = False
@@ -291,20 +194,16 @@ def readTrack(opt):
 	vid.release()
 	plt.show()
 
-
 	# Butterworth filter
 	b, a = scipy.signal.butter(1, 0.5)
-	distance12Arr = scipy.signal.filtfilt(b, a, distance12Arr)
-	distance23Arr = scipy.signal.filtfilt(b, a, distance23Arr)
-	distance34Arr = scipy.signal.filtfilt(b, a, distance34Arr)
-	distance45Arr = scipy.signal.filtfilt(b, a, distance45Arr)
+	distancesArr = np.array(distancesArr)
+	for i in range(N-1):
+		distancesArr[:,i] = scipy.signal.filtfilt(b, a, distancesArr[:,i])
 
 	# Plot
 	plt.figure(2)
-	plt.plot(timeArr, distance12Arr, label='distance12')
-	plt.plot(timeArr, distance23Arr, label='distance23')
-	plt.plot(timeArr, distance34Arr, label='distance34')
-	plt.plot(timeArr, distance45Arr, label='distance45')
+	for i in range(N-1):
+		plt.plot(timeArr, distancesArr[:,i], label='distance {}-{} cm'.format(i+1, i+2))
 	plt.xlabel('Time(s)')
 	plt.ylabel('Distance(cm)')
 	plt.title('Distance vs Time')
