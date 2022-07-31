@@ -90,7 +90,7 @@ def readTrack(opt):
 	timeArr = []
 	distancesArr = []
 	colours_plot = ['lime', 'magenta', 'yellow', 'cyan', 'green', 'blue', 'red']
-
+	count_frame = 0
 	while vid.isOpened():
 		ret, frame = vid.read()
 
@@ -150,8 +150,18 @@ def readTrack(opt):
 			plt.figure(1)
 			plt.cla()
 			plt.gca().set_aspect('equal')
+			plt.xlabel('(cm)')
+			plt.ylabel('(cm)')
 			plt.gca().set_ylim(0, height * agentLength / length)
 			plt.gca().set_xlim(0, width * agentLength / length)
+			plt.figure(1).tight_layout()
+
+			plt.figure(1).patch.set_facecolor('#000000')
+			plt.gca().tick_params(axis='x', colors='#ffffff')
+			plt.gca().tick_params(axis='y', colors='#ffffff')
+			plt.gca().yaxis.label.set_color('#ffffff')
+			plt.gca().xaxis.label.set_color('#ffffff')
+
 			plt.gca().imshow(cv.cvtColor(frame, cv.COLOR_BGR2RGB), extent=[0, width * agentLength / length, 0, height * agentLength / length])
 			
 			# FOR distances
@@ -170,8 +180,7 @@ def readTrack(opt):
 			for i in range(N):
 				plt.plot(pointsInTrack[i][0] * agentLength / length, pointsInTrack[i][1] * agentLength / length, 'bo', color='red')
 
-			plt.xlabel('(cm)')
-			plt.ylabel('(cm)')
+			
 			plt.pause(0.000000001)
 
 			# append into arrays
@@ -185,10 +194,13 @@ def readTrack(opt):
 			del(firstrow)	# free memory
 
 			seconds += deltaT
-			firstFrame = False
-
+			if (opt.writeVideo):
+				plt.savefig('frames/'+"{:05n}".format(count_frame)+'.png')
+				
+			count_frame += 1
 			if cv.waitKey(1) == 27:
 				break
+			
 		else:
 			break
 	vid.release()
@@ -218,6 +230,7 @@ def parse_opt(known=False):
 	parser.add_argument('--outputName', default = "results.csv",type=str,help='Results for plotting')
 	parser.add_argument('--cornerPoints', default = "cornerPoints.csv",type=str,help='Track corners used for perspective transform')
 	parser.add_argument('--nCars', default = 5, type=int, help='Number of cars')
+	parser.add_argument('--writeVideo', action='store_true', help='Flag for frame saving')
 	opt = parser.parse_known_args()[0] if known else parser.parse_args()
 	return opt
 

@@ -3,3 +3,5 @@ zTracking/
 
 #ignore pycache
 **/__pycache__
+#ignore frames folder
+**/frames
