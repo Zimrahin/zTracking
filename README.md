@@ -8,7 +8,7 @@ Instructions for its use are separated into four sections:
 * Write CSV
 * Read CSV and results
 
-![image](./READMEimg/zTracking.png)
+![image](./READMEimg/output.gif)
 
 ### Instructions
 #### Installation
