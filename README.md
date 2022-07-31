@@ -69,7 +69,7 @@ Select a trackable area from the frontalmost car. Press Enter. Once processing i
 
 `readTrack.py` is used to read a coordinate map of a track and a video
 ```
-python readTrack.py --fileName "prueba_1.mp4" --trackName "trackPoints.csv" --outputName "results.csv"
+python readTrack.py --fileName "prueba_1.mp4" --trackName "trackPoints.csv" --outputName "results.csv" --nCars 5
 ```
 * `fileName` is the video containing an experiment.
 * `trackName` is the name of the input CSV file which contains the track coordinates

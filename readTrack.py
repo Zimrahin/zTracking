@@ -9,10 +9,10 @@ from Tracker import Tracker
 
 
 agentLength = 10.5 	# cm (cube)
-N = 6 				# number of carts
 
 def readTrack(opt):
 	# read CSV file
+	N = opt.nCars 		# number of cars
 	positions = []		# for perspective transform
 	with open(opt.cornerPoints, "r") as infile:
 		reader = csv.reader(infile)
@@ -217,6 +217,7 @@ def parse_opt(known=False):
 	parser.add_argument('--trackName', default = "trackPoints.csv",type=str,help='CSV file containing track coordinates')
 	parser.add_argument('--outputName', default = "results.csv",type=str,help='Results for plotting')
 	parser.add_argument('--cornerPoints', default = "cornerPoints.csv",type=str,help='Track corners used for perspective transform')
+	parser.add_argument('--nCars', default = 5, type=int, help='Number of cars')
 	opt = parser.parse_known_args()[0] if known else parser.parse_args()
 	return opt
 
