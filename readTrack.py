@@ -60,8 +60,8 @@ def readTrack(opt):
 			row_float =[float(row[0]), float(row[1])]
 			trackPoints.append(row_float)
 
-	trackPoints_x = [x[0] for x in trackPoints]
-	trackPoints_y = [y[1] for y in trackPoints]
+	# trackPoints_x = [x[0] for x in trackPoints]
+	# trackPoints_y = [y[1] for y in trackPoints]
 	trackPoints_x_cm = [x[0] * agentLength / length for x in trackPoints]
 	trackPoints_y_cm = [y[1] * agentLength / length for y in trackPoints]
 
