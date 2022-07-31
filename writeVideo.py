@@ -10,7 +10,7 @@ def writeVideo(opt):
     frame = cv.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
 
-    video = cv.VideoWriter(opt.outputName + '.mp4', cv.VideoWriter_fourcc(*'avc1'), fps, (width,height))
+    video = cv.VideoWriter(opt.outputName + '.mp4', cv.VideoWriter_fourcc(*'h264'), fps, (width,height))
 
     for image in images:
         video.write(cv.imread(os.path.join(image_folder, image)))
