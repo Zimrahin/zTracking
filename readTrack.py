@@ -68,6 +68,11 @@ def readTrack(opt):
 
 	plt.figure(0)
 	plt.cla()
+	plt.figure(0).patch.set_facecolor('#000000')
+	plt.gca().tick_params(axis='x', colors='#ffffff')
+	plt.gca().tick_params(axis='y', colors='#ffffff')
+	plt.gca().yaxis.label.set_color('#ffffff')
+	plt.gca().xaxis.label.set_color('#ffffff')
 	plt.gca().set_aspect('equal')
 	plt.gca().set_ylim(0, height * agentLength / length)
 	plt.gca().set_xlim(0, width * agentLength / length)
@@ -75,6 +80,7 @@ def readTrack(opt):
 	plt.plot(trackPoints_x_cm, trackPoints_y_cm, color='lime')
 	plt.xlabel('(cm)')
 	plt.ylabel('(cm)')
+	plt.figure(0).tight_layout()
 	plt.show()
 
 	# initialise trackers

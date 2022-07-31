@@ -2,34 +2,39 @@
 
 This project is designed to measure, via image processing, the distances between cars in a platooning on a circuit.
 
-Instructions for its use are separated into four sections:
+Instructions for its use are separated into five sections:
 * Installation
 * Cropping
 * Write CSV
 * Read CSV and results
+* Write video
 
 ![image](./READMEimg/output.gif)
 
-### Instructions
-#### Installation
-##### Install Virtualenv
+---
+
+## Instructions
+### Installation
+#### Install Virtualenv
 ```
 pip install virtualenv
 ```
-##### Create environment in repository folder
+#### Create environment in repository folder
 ```
 virtualenv zTracking
 ```
-##### Activate environment
+#### Activate environment
 ```
 zTracking\Scripts\Activate
 ```
-##### Install requirements
+#### Install requirements
 ```
 pip install -r requirements.txt
 ```
 
-#### Cropping
+---
+
+### Cropping
 * Download Kdenlive (open source software).
 * Drag video into Kdenlive and switch profile to 1080i (if videos are interlaced)
 
@@ -47,7 +52,7 @@ pip install -r requirements.txt
 
 ---
 
-#### Write CSV
+### Write CSV
 
 `writeTrack.py` is used to create a coordinate map of the track from a cropped video of one lap.
 ```
@@ -68,7 +73,7 @@ Select a trackable area from the frontalmost car. Press Enter. Once processing i
 
 ---
 
-#### Read CSV
+### Read CSV
 
 `readTrack.py` is used to read a coordinate map of a track and a video
 ```
@@ -91,7 +96,7 @@ Select a trackable area from each car, from left to right. Press Enter each time
 
 --- 
 
-#### Write Video
+### Write Video
 `writeVideo.py` is used to write a video from images stored in *frames* folder
 ```
 python writeVideo.py --outputName output
